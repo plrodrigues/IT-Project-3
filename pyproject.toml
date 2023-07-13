@@ -16,10 +16,14 @@ jupyter = "*"
 jupyter_black = "*"
 pandas = "*"
 tqdm = "*"
+scikit-learn = "*"
+plotly = "*"
+statsmodels = "*"
 
 [tool.poetry.dev-dependencies]
 plotly-express = "*"
 matplotlib = "^3.5.1"
+seaborn = "*"
 
 [tool.black]
 line-length = 100
