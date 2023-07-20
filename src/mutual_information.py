@@ -69,7 +69,7 @@ def get_joint_probabilities_of_2(x: np.ndarray, y: np.ndarray, **kwargs) -> np.n
         return get_joint_probabilities_of_categorical_categorical(x, y)
 
 
-def get_joint_entropy_from_2d_probability(joint_probabilities: np.ndarray, **kwargs) -> float:
+def get_joint_entropy_from_probability(joint_probabilities: np.ndarray, **kwargs) -> float:
     base = kwargs.get("base", 2)
     # Filter out probabilities that are greater than 0
     non_zero_probs = joint_probabilities[joint_probabilities > 0]
@@ -90,7 +90,7 @@ def get_joint_entropy_from_2_arrays(x: np.ndarray, y: np.ndarray, **kwargs) -> f
     # Get the joint probability
     joint_probabilities = get_joint_probabilities_of_2(x, y, **kwargs)
     # Joint entropy
-    joint_entropy = get_joint_entropy_from_2d_probability(joint_probabilities, **kwargs)
+    joint_entropy = get_joint_entropy_from_probability(joint_probabilities, **kwargs)
     return joint_entropy
 
 

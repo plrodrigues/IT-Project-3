@@ -1,12 +1,10 @@
-import math
 import unittest
 
 import numpy as np
 from sklearn.metrics import mutual_info_score
 
 from src.mutual_information import (
-    get_joint_entropy_from_2_arrays,
-    get_joint_entropy_from_2d_probability,
+    get_joint_entropy_from_probability,
     get_joint_probabilities_of_2,
     get_mutual_information,
 )
@@ -30,7 +28,7 @@ class MutualInformationTests(unittest.TestCase):
                 [0.1, 0.0, 0.2],
             ]
         )
-        joint_entropy = get_joint_entropy_from_2d_probability(joint_probabilities)
+        joint_entropy = get_joint_entropy_from_probability(joint_probabilities)
 
         # Calculate the expected joint entropy manually
         expected_entropy = (
