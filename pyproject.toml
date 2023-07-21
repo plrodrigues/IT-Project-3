@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "informationtheory-causality"
+version = "0.1.0"
+description = "Exploring metrics to access causality, with information theory principles."
+authors = ["PLRodrigues <35863590+plrodrigues@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "informationtheory_causality"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.12"
+black = "^22.3.0"
+isort = "^5.10.1"
+numpy = "^1.22.3"
+ipykernel = "*"
+jupyter = "*"
+jupyter_black = "*"
+pandas = "*"
+tqdm = "*"
+scikit-learn = "*"
+scipy = "*"
+plotly = "*"
+statsmodels = "*"
+loguru = "*"
+
+[tool.poetry.dev-dependencies]
+plotly-express = "*"
+matplotlib = "^3.5.1"
+seaborn = "*"
+
+[tool.black]
+line-length = 100
+target_version = ["py310"]
+
+
+[tool.isort]
+profile = "black"
+py_version = 310
+multi_line_output = 3
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
