@@ -3,49 +3,59 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from src.transfer_entropy import transfer_entropy
+from src.transfer_entropy import get_transfer_entropy
 
 
 class TestTransferEntropy(unittest.TestCase):
     @staticmethod
-    def generate_test_data(length):
-        """
-        Generate test data with two columns for transfer entropy computation.
+    def get_bistable_system_data() -> tuple[np.ndarray, np.ndarray]:
+        # Bistable system example
+        xs = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0])  # Light switch 'X' (0: OFF, 1: ON)
+        ys = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1])  # Lightbulb 'Y' (0: OFF, 1: ON)
+        return xs, ys
 
-        Parameters:
-            length (int): Length of the time series.
+    @staticmethod
+    def get_time_reversal_symmetry_data() -> tuple[np.ndarray, np.ndarray]:
+        # Time-reversal symmetry example
+        xs = np.array([0, 1, 1, 0, 0, 1, 1, 0, 0])  # 'X' has a periodic pattern
+        ys = np.array([1, 0, 0, 1, 1, 0, 0, 1, 1])  # 'Y' follows the same pattern as 'X'
+        return xs, ys
 
-        Returns:
-            pandas.DataFrame: DataFrame with 'x' and 'y' columns.
-        """
-        # Generate time series data
-        np.random.seed(123)
-        t = np.arange(length)
-        x = np.sin(0.1 * t) + np.random.normal(0, 0.2, length)
-        y = np.roll(x, 3) + np.random.normal(0, 0.2, length)
+    @staticmethod
+    def get_invertible_switch_data() -> tuple[np.ndarray, np.ndarray]:
+        xs = [0, 1, 1, 1, 1, 0, 0, 0, 0]
+        ys = [0, 0, 1, 1, 1, 1, 0, 0, 0]
+        return xs, ys
 
-        # Create DataFrame
-        df = pd.DataFrame({"x": x, "y": y})
+    def test_case_1_te_with_lag_2(self):
+        xs, ys = self.get_bistable_system_data()
+        # Test Case 1: Transfer entropy with lag 2
+        te = get_transfer_entropy(target_column=ys, causal_column=xs, lag=2)
+        self.assertAlmostEqual(te, 0.39355535745192394, places=6)
 
-        return df
+    def test_case_1_te_with_lag_3(self):
+        xs, ys = self.get_bistable_system_data()
+        # Test Case 1: Transfer entropy with lag 3
+        te = get_transfer_entropy(target_column=ys, causal_column=xs, lag=3)
+        self.assertEqual(te, 1.0)
 
-    def test_case_1_te_with_lag_1(self):
-        # Test Case 1: Transfer entropy with lag 1
-        df = self.generate_test_data(100)
-        te1 = get_shannons_entropy(df["x"], df["y"], history=1)
-        print(f"Transfer Entropy (Lag 1): {te1}")
-
-    def test_case_2_te_with_lat_2(self):
+    def test_case_2_te_with_lag_2(self):
+        xs, ys = self.get_time_reversal_symmetry_data()
         # Test Case 2: Transfer entropy with lag 2
-        df = self.generate_test_data(100)
-        te2 = get_shannons_entropy(df["x"], df["y"], history=2)
-        print(f"Transfer Entropy (Lag 2): {te2}")
+        te = get_transfer_entropy(target_column=ys, causal_column=xs, lag=2)
+        self.assertAlmostEqual(te, 0.0, places=6)
 
-    def test_case_3_te_with_lag3(self):
-        # Test Case 3: Transfer entropy with lag 3
-        df = self.generate_test_data(100)
-        te3 = get_shannons_entropy(df["x"], df["y"], history=3)
-        print(f"Transfer Entropy (Lag 3): {te3}")
+    def test_case_3_te_with_lag_1_one_way(self):
+        xs, ys = self.get_invertible_switch_data()
+        # Test Case 3: Transfer entropy with lag 1
+        te = get_transfer_entropy(target_column=ys, causal_column=xs, lag=1)
+        self.assertAlmostEqual(te, 0.8112781244591329, places=6)
+
+    def test_case_3_te_with_lag_1_inverted(self):
+        xs, ys = self.get_invertible_switch_data()
+        # Test Case 3: Transfer entropy with lag 1
+        te = get_transfer_entropy(target_column=xs, causal_column=ys, lag=1)
+        self.assertAlmostEqual(te, 0.12255624891826589, places=6)
 
 
 if __name__ == "__main__":
