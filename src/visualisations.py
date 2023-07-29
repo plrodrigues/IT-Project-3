@@ -1,5 +1,10 @@
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 import pandas as pd
+
+from src.utils import convert_columns_in_column_to_human_readable
 
 PLOT_WIDTH = 8
 PLOT_HIGHT = 3
@@ -21,16 +26,47 @@ def plot_hist_and_boxplot(df: pd.DataFrame, column: str, y_label: str) -> None:
     plt.show()
 
 
+def add_daylight_shadows_to_time_series(df: pd.DataFrame, **kwargs) -> None:
+    date_time_column = kwargs.get("date_time_column", "date_time")
+    # Define daylight start and end times
+    sr_date = df[date_time_column].dt.date
+    # The day_start and day_end arrays depend on the definition of daylight and night times.
+    # If we simply define daylight as, for example, from 6:00 to 18:00, and night time as
+    # from 18:00 to 6:00 the next day. However, this depends on the location of the
+    # data acquisition and on the time of the year.
+    # For simplicity, we are limiting to hard coded values. Libraries, such as sunlac
+    # can be used as an automatic format for identifying the daylight and dawn times.
+    day_start_time = pd.to_datetime("06:00:00").time()
+    day_end_time = pd.to_datetime("18:00:00").time()
+    day_starts = [
+        pd.to_datetime(str(date) + " " + day_start_time.strftime("%H:%M:%S")) for date in sr_date
+    ]
+    day_ends = [
+        pd.to_datetime(str(date) + " " + day_end_time.strftime("%H:%M:%S")) for date in sr_date
+    ]
+
+    # Add shadowing for daylight and night times
+    for i in range(1, len(day_ends)):
+        plt.axvspan(day_ends[i - 1], day_starts[i], facecolor="moccasin", alpha=0.1)
+
+
 def plot_timeseries(df: pd.DataFrame, column: str, y_label: str, **kwargs) -> None:
     date_time_column = kwargs.get("date_time_column", "date_time")
+    rotation = kwargs.get("rotation", 0)
+    do_add_daily_shadows = kwargs.get("do_add_daily_shadows", False)
     df_plot = df.copy(deep=True)
     df_plot.set_index(date_time_column, inplace=True)
 
     # Plot the time series
     plt.figure(figsize=(PLOT_WIDTH, PLOT_HIGHT))
     plt.plot(df_plot.index, df_plot[column])
+
+    if do_add_daily_shadows:
+        add_daylight_shadows_to_time_series(df, **kwargs)
+
     plt.xlabel("Date")
     plt.ylabel(y_label)
+    plt.xticks(rotation=rotation)
     plt.title(f"{y_label} Time Series")
 
     plt.show()
@@ -39,17 +75,131 @@ def plot_timeseries(df: pd.DataFrame, column: str, y_label: str, **kwargs) -> No
 def plot_gantt_of_categories(
     df: pd.DataFrame, category_column: str, y_label: str, **kwargs
 ) -> None:
+    # Constants for Gantt chart only
+    PLOT_WIDTH = 10
+    PLOT_HEIGHT = 3
+    AXIS_FONTSIZE = 10
+    LABELS_FONTSIZE = 8
+    # key word arguments
     date_time_column = kwargs.get("date_time_column", "date_time")
-    _, ax = plt.subplots(figsize=(PLOT_WIDTH, PLOT_HIGHT))
+    rotation = kwargs.get("rotation", 0)
+    hight = kwargs.get("hight", PLOT_HEIGHT)
+    date_interval_days = kwargs.get("date_interval_days", 2)
+    # Remove duplicates
+    df_plot = df.copy(deep=True)
+    df_plot = df_plot[[date_time_column, category_column]]
+    df_plot[f"{category_column}_segment"] = (
+        df_plot[category_column] != df_plot[category_column].shift()
+    ).cumsum()
+    df_plot = df_plot.drop_duplicates(
+        subset=[category_column, f"{category_column}_segment"], keep="first"
+    )
+    df_plot.set_index(date_time_column, inplace=True)
 
-    for _, row in df.iterrows():
-        start = row[date_time_column]
-        end = start + pd.DateOffset(hours=1)
-        weather = row[category_column]
-        ax.barh(weather, end - start, left=start, height=0.5)
+    # Create a color map for each unique category
+    categories = df_plot[category_column].unique()
+    colors = [plt.cm.tab20b(i) for i in range(len(categories))]
+    color_map = dict(zip(categories, colors))
 
-    ax.set_ylabel(y_label)
-    ax.set_xlabel("Date Time")
+    _, ax = plt.subplots(figsize=(PLOT_WIDTH, hight))
+    # Set the locator and formatter to show dates at a daily interval
+    date_format = mdates.DateFormatter("%Y-%m-%d")
+    ax.xaxis.set_major_locator(
+        mdates.DayLocator(interval=date_interval_days)
+    )  # Interval=1 means show every day
+    ax.xaxis.set_major_formatter(date_format)
+
+    for i in range(len(df_plot) - 1):
+        start = df_plot.index[i]
+        end = df_plot.index[i + 1]
+        weather = df_plot.iloc[i, df_plot.columns.get_loc(category_column)]
+
+        # Use the color map to set the color for each category
+        color = color_map[weather]
+
+        ax.barh(y=weather, width=(end - start), left=start, height=0.5, color=color)
+
+    ax.set_ylabel(y_label, fontsize=AXIS_FONTSIZE)
+    ax.set_xlabel("Date Time", fontsize=AXIS_FONTSIZE)
     ax.set_title(f"Time Series of {y_label} Categories (Gantt Chart)")
+    ax.tick_params(axis="both", which="major", labelsize=LABELS_FONTSIZE)
     ax.invert_yaxis()
+
+    # Set y-axis tick labels color
+    for tick_label in ax.get_yticklabels():
+        category = tick_label.get_text()
+        color = color_map[category]
+        tick_label.set_color(color)
+
+    plt.tight_layout()
+    plt.xticks(rotation=rotation)
+    plt.show()
+
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import pandas as pd
+
+
+def plot_dag(
+    df: pd.DataFrame, causality_title: str, causality_column: str = "TE", **kwargs
+) -> None:
+    df = df.reset_index(drop=True)
+    # Define the mapping of labels to symbols or numbers
+    if causality_column == "TE":
+        label_mapping = {
+            idx: f"{idx} | {row['Lag']} hours w/ {round(row[causality_column], 0)} bits"
+            for idx, row in df.iterrows()
+        }
+    else:
+        label_mapping = {
+            idx: f"{idx} | {row['Lag']} hours w/ {round(row[causality_column], 2)} p-value"
+            for idx, row in df.iterrows()
+        }
+
+    # Directed graph
+    G = nx.DiGraph()
+
+    # Nodes
+    G.add_nodes_from(df["from_column"].unique())
+    G.add_nodes_from(df["to_column"].unique())
+
+    # Edges with causal orientation information
+    for idx, row in df.iterrows():
+        G.add_edge(
+            row["from_column"],
+            row["to_column"],
+            label=idx,
+        )
+
+    # DAG
+    pos = nx.spring_layout(G, seed=42)
+    edge_labels = {(u, v): d["label"] for u, v, d in G.edges(data=True)}
+
+    nx.draw(
+        G,
+        pos,
+        with_labels=True,
+        node_size=1500,
+        node_color="lightblue",
+        font_size=10,
+        font_weight="bold",
+        arrows=True,
+    )
+
+    # Create the legend
+    legend_items = [
+        plt.Line2D([0], [0], marker=".", color="w", markerfacecolor="lightgrey", label=label)
+        for label in label_mapping.values()
+    ]
+    plt.legend(
+        handles=legend_items,
+        title="Legend",
+        loc="upper right",
+        fontsize=8,
+        bbox_to_anchor=(1.3, 1),
+    )
+
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+    plt.title(f"DAG of {causality_title} Results")
     plt.show()

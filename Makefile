@@ -11,5 +11,6 @@ isort:
 run_unit_tests:
 	python tests/test_entropy.py
 	python tests/test_mutual_information.py
+	python tests/test_transfer_entropy.py
 
 .PHONY: black isort run_unit_tests

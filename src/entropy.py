@@ -6,7 +6,10 @@ from loguru import logger
 
 def normalise_array(x: np.ndarray, bins: int) -> np.ndarray:
     x = [float(value) for value in x]
-    x_norm = x / ((np.max(x) - np.min(x)) / bins)
+    if (np.max(x) - np.min(x)) != 0:
+        x_norm = x / ((np.max(x) - np.min(x)) / bins)
+    else:
+        x_norm = x
     return x_norm
 
 

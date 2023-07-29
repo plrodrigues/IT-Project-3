@@ -21,6 +21,7 @@ scipy = "*"
 plotly = "*"
 statsmodels = "*"
 loguru = "*"
+networkx = "*"
 
 [tool.poetry.dev-dependencies]
 plotly-express = "*"

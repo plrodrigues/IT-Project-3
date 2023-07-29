@@ -70,12 +70,12 @@ def get_mutual_information_betwen_3_arrays(x, y, z, **kwargs) -> float:
 
 
 def get_conditional_mutual_information(
-    about_x: np.ndarray, about_y: np.ndarray, knowing_z: np.ndarray, **kwargs
+    about_x: np.ndarray, with_y: np.ndarray, knowing_z: np.ndarray, **kwargs
 ) -> float:
     # Mutual information of every pair of variables
-    mi_x_y = get_mutual_information(about_x, about_y, **kwargs)
+    mi_x_y = get_mutual_information(about_x, with_y, **kwargs)
     # Mutual information of the 3 variables
-    mi_x_y_z = get_mutual_information_betwen_3_arrays(about_x, about_y, knowing_z, **kwargs)
+    mi_x_y_z = get_mutual_information_betwen_3_arrays(about_x, with_y, knowing_z, **kwargs)
 
     # Conditional mutual information
     cmi = mi_x_y - mi_x_y_z
