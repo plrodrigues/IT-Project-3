@@ -1,34 +1,58 @@
 # IT-Project-3
 
+This particular project has been implemented as part of the Information Theory module at [FEUP (Faculdade de Engenharia da Universidade do Porto)](https://sigarra.up.pt/feup/en/web_page.inicial). 
+
+Its primary focus involves exploring fundamental methodologies that facilitate access to causal relationships within data.
+The [Weather dataset](https://www.kaggle.com/datasets/swatikhedekar/python-project-on-weather-dataset), which is readily available on [Kaggle](https://www.kaggle.com/), is utilized for the purpose of testing the implementation of these methods.
+The resulting insights derived from data analysis are subject for an internal report.
+
+## Code for the internal report
+
+In order to compile an internal report, a variety of notebooks were built, which can be accessed at the following directory: [/notebooks/](/notebooks/).
 
 ## Python environment
 
+How to replicate the experiments:
+
+Create environment inside project root directory:
+
+```sh
 python -m venv .venv_it_proj3
+```
+
+Activate it, to have the poetry environment created inside it, to avoid being created in the `.cache`:
+
+```sh
 
 source .venv_it_proj3/bin/activate
+```
 
-## Explore relationships
+Install all poetry dependencies defined for this project:
 
-- Temperature and Dew Point Temperature:
-    - Relationship: Investigate how the current temperature (temp_c) is related to the past dew point temperature (dew_point_temp_c).
-    - Lags to test: 1 hour, 3 hours, or even up to 24 hours to see if past dew point temperatures influence the current temperature.
+```sh
+poetry install
+```
 
-- Real Humidity Percentage and Dew Point Temperature:
-    - Relationship: Examine how the real humidity percentage (real_hum_pct) is related to the past dew point temperature (dew_point_temp_c).
-    - Lags to test: Test different lags to capture potential dependencies.
-    
-- Weather Conditions and Temperature/Real Humidity Percentage:
-    - Relationship: Investigate how weather conditions (e.g., Fog, Freezing Drizzle, etc.) are related to the current temperature (temp_c) or real humidity percentage (real_hum_pct).
-    - Lags to test: Test the relationship with the current weather condition. Lag it by 1 hour to explore potential effects on temperature or humidity in the following hour.
+Activate them in the `.venv_it_proj3` environment:
 
-- Wind Speed and Visibility:
-    - Relationship: Explore how the wind speed (wind_speed_kmh) affects the visibility (visibility_km).
-    - Lags to test: Test different lags to understand if wind speed influences visibility immediately or with a delay.
+```sh
+poetry shell
+```
 
-- Pressure and Weather Conditions:
-    - Relationship: Examine how atmospheric pressure (press_kpa) is associated with different weather conditions.
-    - Lags to test: Test the relationship with the current pressure. Consider different lags to identify potential patterns.
+## Run tests and checks
 
-- Temperature and Weather Conditions:
-    - Relationship: Investigate how the current temperature (temp_c) is related to specific weather conditions (e.g., Fog, Freezing Drizzle, etc.).
-    - Lags to test: Test different lags to see how temperature relates to the occurrence of particular weather conditions.
+All the tests are inplemented under [/tests/](/tests/).
+
+To run them, you can simply run the following command:
+
+```sh
+source .bashrc
+```
+
+The command above will:
+
+- format the Python code with Python Black
+- sort the imports using isort
+- run the implemented tests
+
+
