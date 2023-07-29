@@ -1,7 +1,10 @@
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
+
+from src.utils import convert_columns_in_column_to_human_readable
 
 PLOT_WIDTH = 8
 PLOT_HIGHT = 3
@@ -130,4 +133,73 @@ def plot_gantt_of_categories(
 
     plt.tight_layout()
     plt.xticks(rotation=rotation)
+    plt.show()
+
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import pandas as pd
+
+
+def plot_dag(
+    df: pd.DataFrame, causality_title: str, causality_column: str = "TE", **kwargs
+) -> None:
+    df = df.reset_index(drop=True)
+    # Define the mapping of labels to symbols or numbers
+    if causality_column == "TE":
+        label_mapping = {
+            idx: f"{idx} | {row['Lag']} hours w/ {round(row[causality_column], 0)} bits"
+            for idx, row in df.iterrows()
+        }
+    else:
+        label_mapping = {
+            idx: f"{idx} | {row['Lag']} hours w/ {round(row[causality_column], 2)} p-value"
+            for idx, row in df.iterrows()
+        }
+
+    # Directed graph
+    G = nx.DiGraph()
+
+    # Nodes
+    G.add_nodes_from(df["from_column"].unique())
+    G.add_nodes_from(df["to_column"].unique())
+
+    # Edges with causal orientation information
+    for idx, row in df.iterrows():
+        G.add_edge(
+            row["from_column"],
+            row["to_column"],
+            label=idx,
+        )
+
+    # DAG
+    pos = nx.spring_layout(G, seed=42)
+    edge_labels = {(u, v): d["label"] for u, v, d in G.edges(data=True)}
+
+    nx.draw(
+        G,
+        pos,
+        with_labels=True,
+        node_size=1500,
+        node_color="lightblue",
+        font_size=10,
+        font_weight="bold",
+        arrows=True,
+    )
+
+    # Create the legend
+    legend_items = [
+        plt.Line2D([0], [0], marker=".", color="w", markerfacecolor="lightgrey", label=label)
+        for label in label_mapping.values()
+    ]
+    plt.legend(
+        handles=legend_items,
+        title="Legend",
+        loc="upper right",
+        fontsize=8,
+        bbox_to_anchor=(1.3, 1),
+    )
+
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+    plt.title(f"DAG of {causality_title} Results")
     plt.show()
