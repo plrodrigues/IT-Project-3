@@ -72,3 +72,13 @@ def format_and_convert_to_latex(df: pd.DataFrame, causality_col: str) -> str:
         index=False, header=True, float_format="%.2f"
     )
     return latex_table
+
+
+def inplace_normalise_df(df: pd.DataFrame, column: str):
+    df[f"{column}_normalized"] = (df[column] - df[column].min()) / (
+        df[column].max() - df[column].min()
+    )
+
+
+def inplace_zscore_df(df: pd.DataFrame, column: str):
+    df[f"{column}_zscore"] = (df[column] - df[column].mean()) / df[column].std()
